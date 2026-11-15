@@ -1,118 +1,100 @@
-# Trade Skill Certification Platform — Project Report
+# Trade Skill Certification Verification & Digital Badge Platform — Project Report
 
 ## 1. Project Overview
 
-**TradeCert** is a web platform concept for verifying and certifying trade skills — connecting apprentices and skilled workers with assessments, digital certificates, and employers. This submission delivers the **Phase 1 foundation**: a responsive React frontend (landing page + role-based registration), an Express.js backend serving the app and a REST API scaffold, and a production deployment.
+**TradeCert** is a full-stack platform that lets vocational training institutes (ITIs, skill centers) issue **verified digital certificates** to students. Each certificate gets a unique ID and QR code; anyone — especially employers — can verify authenticity online in seconds. Students keep a digital portfolio of badges; admins approve institutes and monitor the platform.
 
 - **Program:** Unified Mentor Internship
-- **Project:** UM_PROJECT_1 — Trade Skill Certification Platform
+- **Project:** UM_PROJECT_1
+- **References:** National Skill Development Corporation · Skill India · Credly
 - **Live demo:** https://tradeskillcertification.onrender.com
 - **Repository:** https://github.com/Sanjanapatil16/TradeSkillCertification
 
 ## 2. Problem Statement
 
-Skilled trades (electrical, welding, carpentry, HVAC, etc.) lack a unified, verifiable way to:
-
-- Prove worker competency to employers
-- Track an apprentice's learning and assessment progress
-- Issue portable, tamper-proof digital certificates
-- Connect verified talent with job opportunities
-
-Existing processes rely on paper certificates and informal verification, leading to fraud risk and hiring friction.
+Vocational certificates are often paper-based — easy to forge, lose, or slow to verify. Employers hiring electricians, welders, machinists and mechanics cannot quickly confirm whether a candidate truly holds a certification.
 
 ## 3. Objectives
 
 **Primary**
-- Provide a centralized platform for trade skill certification
-- Enable role-based onboarding (apprentice, skilled worker, certified professional, employer/trainer)
-- Deliver a fast, mobile-friendly web experience
+- Digital issuance of verified trade certificates by institutes
+- One-click/QR certificate verification for employers
+- Student digital badge portfolio
+- Fraud reduction via unique IDs + revocation
 
 **Secondary**
-- Lay the API + deployment foundation for auth, assessments, and certificate issuance
-- Support future integration with assessment engines and employer portals
+- QR-based verification, institute self-service issuance, shareable badges, central verification records
 
 ## 4. Scope
 
-**In scope (Phase 1 — delivered)**
-- Responsive landing page presenting the platform
-- Role-based registration UI (4 personas)
-- Express.js backend with health-check API, serving the production React build
-- CI-ready build pipeline (`npm run install:all && npm run build` → `npm start`)
-- Free-tier cloud deployment (Render)
+**Phase 1 (implemented)**
+- Student registration/login + certificate portfolio
+- Institute registration with admin approval workflow
+- Certificate issuance with auto-generated unique ID + QR code
+- Public verification page (ID or QR)
+- Public digital badge page
+- Admin panel: approve/reject institutes, revoke certificates, KPIs
 
-**Out of scope (planned next phases)**
-- User authentication & authorization (JWT/bcryptjs deps already included)
-- MongoDB persistence via Mongoose (dependency already included)
-- Assessment engine, certificate generation (PDF/blockchain-style verification)
-- Employer dashboard & job matching
+**Out of scope (Phase 1)**
+- Blockchain storage, government portal integration, online skill testing, mobile app
 
 ## 5. Technology Stack
 
 | Layer | Technology |
 |---|---|
-| Frontend | React 19, Vite 8, plain CSS (responsive design) |
-| Backend | Node.js, Express 5, CORS |
-| Database | MongoDB/Mongoose — scaffolded (next phase) |
-| Auth | JWT + bcryptjs — scaffolded (next phase) |
+| Frontend | React 19, Vite, custom CSS (responsive, hash-routed SPA) |
+| Backend | Node.js, Express 5, REST API |
+| Database | JSON document store (MongoDB-compatible schema, swappable for Mongoose) |
+| QR codes | `qrcode` package — generated server-side as data URLs |
+| Auth | Session tokens, SHA-256 hashed passwords, role-based access control |
 | Deployment | Render (Node web service, free tier) |
-| Version control | Git + GitHub |
 
 ## 6. Architecture
 
 ```
-Browser → Render (Express :10000)
-            ├── /api/health        → JSON health check
-            └── /*                 → React SPA (frontend/dist)
+React SPA (hash routes)                Express API
+#/           Landing page              POST /api/register|login
+#/login      Auth (student/institute)  GET  /api/me
+#/dashboard  Student portfolio         GET  /api/certificates/mine
+#/institute  Issue certs + QR          POST /api/certificates
+#/admin      Admin panel               GET  /api/verify/:id (public, counts verifications)
+#/verify/:id Public verification       POST /api/institutes/:id/approve|reject
+#/badge/:id  Public digital badge      GET  /api/admin/overview
 ```
 
-The Express server serves the Vite production build statically with SPA fallback routing, so the entire app runs as a single Node process — simple to deploy and scale.
+Single Node process serves API + built frontend — simple Render deployment.
 
-## 7. Features Implemented
+## 7. Roles & Workflows
 
-1. **Landing page** — hero section, value proposition, feature cards (skill verification, digital certificates, progress tracking, employer hiring)
-2. **Role-based registration** — selectable personas (Apprentice / Skilled Worker / Certified Professional / Employer-Trainer) with form validation and success feedback
-3. **Responsive UI** — works on desktop and mobile
-4. **Backend API scaffold** — `/api/health`, JSON parsing, CORS enabled; ready for auth & CRUD routes
-5. **Automated production build** — one-command install + build + start
+- **Student:** registers → sees all certificates issued to their email as digital badges → shares badge/verify links with employers
+- **Institute:** registers → *pending until admin approves* → issues certificates (student name/email, trade skill, level, grade) → gets certificate ID + QR instantly → can revoke mistakes
+- **Employer (public, no login):** opens verify page → enters ID or scans QR → sees student, trade, date, institute, valid/revoked status
+- **Admin:** seeded account (`admin@tradecert.com`) → approves institutes, views all users/certificates, revokes fraudulent certs, sees KPIs (certs issued, verification count, pending institutes)
 
-## 8. Key Files
+## 8. Data Model
 
-```
-UM_PROJECT_1/
-├── package.json          # root scripts: install:all, build, start
-├── backend/
-│   └── server.js         # Express server: API + static SPA hosting
-└── frontend/
-    └── src/
-        ├── App.jsx       # landing page + registration UI
-        ├── App.css       # styling
-        └── index.css     # global reset
-```
+- **User:** id, name, email, passwordHash, role (student/institute/admin), status (active/pending/rejected), profile {instituteName, location, programs}, createdAt
+- **Certificate:** id (`TC-XXXXXX-XXXXXX`), studentName, studentEmail, tradeSkill, level, grade, issueDate, instituteId/Name/Location, status (valid/revoked), qr (data URL), verifyCount
+- **Session:** token → userId
 
 ## 9. How to Run Locally
 
 ```bash
-npm run install:all   # install backend + frontend deps
+npm run install:all   # backend + frontend deps
 npm run build         # build React app
-npm start             # serve at http://localhost:5000
+npm start             # http://localhost:5000
 ```
+
+Demo credentials: admin login `admin@tradecert.com / admin123`.
 
 ## 10. Deployment
 
-Deployed on **Render** as a free Node web service:
-- Build: `npm run install:all && npm run build`
-- Start: `npm start`
-- URL: https://tradeskillcertification.onrender.com
+Render free tier — Build `npm run install:all && npm run build`, Start `npm start`. Live at https://tradeskillcertification.onrender.com
 
 ## 11. Roadmap
 
-- JWT auth + role-based access control (deps ready)
-- MongoDB schemas: User, Skill, Assessment, Certificate
-- Assessment & scoring module
-- PDF certificate generation + public verification link
-- Employer portal & candidate search
-- Notifications (email/SMS) via provider APIs
+JWT auth · MongoDB persistence · PDF certificate download · email notifications to students · richer badge visuals · employer dashboard · analytics reports · mobile app
 
 ## 12. Conclusion
 
-Phase 1 establishes a working, deployed full-stack foundation for the Trade Skill Certification Platform — a professional public-facing UI, a runnable backend, and a reproducible build/deploy pipeline that the remaining features can be built on.
+A working end-to-end certification verification platform: institutes issue QR-coded digital certificates, students build portfolios, employers verify authenticity publicly, and admins govern the ecosystem — deployed live on Render.
