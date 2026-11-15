@@ -18,6 +18,7 @@ export function Verify({ certId }) {
   const c = result?.certificate
   return (
     <div className="center-page">
+      <a href="#/" className="back-link">← Back to home</a>
       <div className="card verify-card">
         <h2>🔍 Certificate Verification</h2>
         <p className="muted">Enter a certificate ID or scan the QR code on a digital badge.</p>
@@ -55,6 +56,7 @@ export function Badge({ certId }) {
   const c = data?.certificate
   return (
     <div className="center-page">
+      <a href="#/" className="back-link">← Back to home</a>
       <div className="card badge-card">
         {error && <p className="error">{error}</p>}
         {!data && !error && <p className="muted">Loading badge…</p>}
