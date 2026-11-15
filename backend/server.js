@@ -11,10 +11,6 @@ app.get("/api/health", (req, res) => {
   res.json({ ok: true });
 });
 
-app.get("/", (req, res) => {
-  res.send("Trade Skill Certification Platform Backend is running!");
-});
-
 // Serve the built React frontend (production)
 const dist = path.join(__dirname, "..", "frontend", "dist");
 app.use(express.static(dist));
